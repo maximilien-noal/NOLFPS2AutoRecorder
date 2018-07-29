@@ -7,11 +7,25 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Threading;
+using WindowsInput;
+using System.Windows.Forms;
 
 namespace NOLFAutoRecorder
 {
+    
     class Program
     {
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool BringWindowToTop(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetActiveWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr FindWindow(string windowClass, string windowName);
+
+
         static string pcsx2ExePath = @"C:\Jeux\PCSX2\PCSX2.EXE";
         static string nolfPs2IsoPath = @"C:\Jeux\ISOs\NOLF.ISO";
 
@@ -22,18 +36,53 @@ namespace NOLFAutoRecorder
 
         static int tempRecordFileNameStart = 1;
 
+        [STAThread]
         static void Main(string[] args)
         {
             var pcsx2Process = StartPcsx2();
             Console.WriteLine("Emulator started");
             pcsx2Process.WaitForInputIdle();
-            Console.WriteLine("Recording process started");
+            bool quickLoadSuccess = LoadQuickSave();
+            if (quickLoadSuccess)
+            {
+                ShowNotification("QuickSave loaded", ToolTipIcon.Info);
+            }
+            else
+            {
+                ShowNotification("QuickSave NOT loaded !", ToolTipIcon.Error);
+            }
+            Thread.Sleep(TimeSpan.FromMinutes(1));
+            ShowNotification("Recording process started", ToolTipIcon.Info);
             StartRecorder();
             Console.WriteLine();
             Console.WriteLine("Press any key to exit...");
             Console.ReadLine();
             StopRecorder();
             StopProcess(pcsx2Process);
+        }
+
+        static void ShowNotification(string message, ToolTipIcon icon)
+        {
+            NotifyIcon notifyIcon = new NotifyIcon();
+            notifyIcon.Text = string.Format(message);
+            notifyIcon.Visible = true;
+            notifyIcon.ShowBalloonTip(5000, "NOLFAutoRecorder", message, icon);
+            notifyIcon.Visible = false;
+            notifyIcon.Dispose();
+        }
+
+        static bool LoadQuickSave()
+        {
+            IntPtr emulatorViewPortWindowHandle = FindWindow("wxWindowNR", null);
+            if(emulatorViewPortWindowHandle == null)
+            {
+                return false;
+            }
+            BringWindowToTop(emulatorViewPortWindowHandle);
+            SetActiveWindow(emulatorViewPortWindowHandle);
+            InputSimulator inputSimulator = new InputSimulator();
+            inputSimulator.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.F3);
+            return true;
         }
 
         static Process StartPcsx2()
