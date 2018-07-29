@@ -88,13 +88,11 @@ namespace NOLFAutoRecorder
 
         bool LoadQuickSave()
         {
-            /*
             if (emulatorViewPortWindow == null)
             {
                 return false;
             }
             SwitchToThisWindow(emulatorViewPortWindow, false);
-            */
             new InputSimulator().Keyboard.KeyPress(VirtualKeyCode.F3);
             return true;
         }
