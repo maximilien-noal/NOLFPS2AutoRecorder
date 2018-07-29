@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -18,6 +17,22 @@ namespace NOLFAutoRecorder
 {
     public partial class MainForm : Form
     {
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SwitchToThisWindow(IntPtr hWnd, bool fromAltTab);
+
+        IntPtr emulatorWindow = IntPtr.Zero;
+        IntPtr emulatorViewPortWindow = IntPtr.Zero;
+
+        string pcsx2ExePath = @"C:\Jeux\PCSX2\PCSX2.EXE";
+        string nolfPs2IsoPath = @"C:\Jeux\ISOs\NOLF.ISO";
+
+        string fmediaPath = @"C:\Jeux\Outils\fmedia.exe";
+        string fmediaStartArgs = "--record --dev-loopback=0 --globcmd=listen -o ";
+        string fmediaStopArgs = "--globcmd=stop";
+        string fmediaWorkDir = @"C:\Jeux\ISOs\VOICE_FR\_Recordings";
+
+        int tempRecordFileNameStart = 1;
+
         Process pcsx2Process;
 
         public MainForm()
@@ -30,7 +45,6 @@ namespace NOLFAutoRecorder
         private void MainForm_Shown(object sender, EventArgs e)
         {
             pcsx2Process = StartPcsx2();
-            Console.WriteLine("Emulator started");
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
             Thread.Sleep(TimeSpan.FromSeconds(13));
@@ -54,32 +68,6 @@ namespace NOLFAutoRecorder
             StopRecorder();
             StopProcess(pcsx2Process);
         }
-
-        [return: MarshalAs(UnmanagedType.Bool)]
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        static extern bool PostMessage(IntPtr hWnd, uint Msg, uint wParam, uint lParam);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SwitchToThisWindow(IntPtr hWnd, bool fromAltTab);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr SetActiveWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr FindWindow(string windowClass, string windowName);
-
-        static IntPtr emulatorWindow = IntPtr.Zero;
-        static IntPtr emulatorViewPortWindow = IntPtr.Zero;
-
-        static string pcsx2ExePath = @"C:\Jeux\PCSX2\PCSX2.EXE";
-        static string nolfPs2IsoPath = @"C:\Jeux\ISOs\NOLF.ISO";
-
-        static string fmediaPath = @"C:\Jeux\Outils\fmedia.exe";
-        static string fmediaStartArgs = "--record --dev-loopback=0 --globcmd=listen -o ";
-        static string fmediaStopArgs = "--globcmd=stop";
-        static string fmediaWorkDir = @"C:\Jeux\ISOs\VOICE_FR\_Recordings";
-
-        static int tempRecordFileNameStart = 1;
 
         void WriteLog(string message, ToolTipIcon icon)
         {
