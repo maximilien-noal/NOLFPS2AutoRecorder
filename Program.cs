@@ -67,7 +67,7 @@ namespace NOLFAutoRecorder
 
         static void StopRecorder()
         {
-            
+            Process.Start(fmediaPath, fmediaStopArgs);
         }
 
         static void StopProcess(Process procToStop)
