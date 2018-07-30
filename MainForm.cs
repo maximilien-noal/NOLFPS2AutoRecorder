@@ -17,8 +17,20 @@ namespace NOLFAutoRecorder
 {
     public partial class MainForm : Form
     {
+        const int SW_MINIMIZE = 6;
+        const int SW_RESTORE = 9;
+
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool SwitchToThisWindow(IntPtr hWnd, bool fromAltTab);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool ShowWindow(IntPtr hWnd, int swCommand);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetActiveWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetForegroundWindow(IntPtr hWnd);
 
         IntPtr emulatorWindow = IntPtr.Zero;
         IntPtr emulatorViewPortWindow = IntPtr.Zero;
@@ -31,7 +43,7 @@ namespace NOLFAutoRecorder
         string fmediaStopArgs = "--globcmd=stop";
         string fmediaWorkDir = @"C:\Jeux\ISOs\VOICE_FR\_Recordings";
 
-        int tempRecordFileNameStart = 1;
+        int tempRecordFileNameStart = 10521;
 
         Process pcsx2Process;
 
@@ -50,6 +62,7 @@ namespace NOLFAutoRecorder
             Thread.Sleep(TimeSpan.FromSeconds(13));
             emulatorViewPortWindow = WndFinder.SearchForWindow("wxWindowNR", "Slot");
             bool quickLoadSuccess = LoadQuickSave();
+            SetForegroundWindow(emulatorViewPortWindow);
             if (quickLoadSuccess)
             {
                 WriteLog("QuickSave loaded", ToolTipIcon.Info);
@@ -80,7 +93,7 @@ namespace NOLFAutoRecorder
             {
                 return false;
             }
-            SwitchToThisWindow(emulatorViewPortWindow, false);
+            SetActiveWindow(emulatorViewPortWindow);
             new InputSimulator().Keyboard.KeyPress(VirtualKeyCode.F3);
             return true;
         }
