@@ -38,7 +38,7 @@ namespace NOLFAutoRecorder
         {
             InitializeComponent();
             this.Shown += MainForm_Shown;
-            Application.ApplicationExit += Application_ApplicationExit;
+            Application.ApplicationExit += OnApplicationExit;
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
@@ -46,11 +46,10 @@ namespace NOLFAutoRecorder
             pcsx2Process = StartPcsx2();
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
-            Thread.Sleep(TimeSpan.FromSeconds(13));
+            Thread.Sleep(TimeSpan.FromSeconds(12));
             emulatorViewPortWindow = WndFinder.SearchForWindow("wxWindowNR", "Slot");
             this.inputImpersonator = new InputImpersonator(emulatorViewPortWindow);
             bool quickLoadSuccess = LoadQuickSave();
-            WindowReorganizer.SetForegroundWindow(emulatorViewPortWindow);
             if (quickLoadSuccess)
             {
                 WriteLog("QuickSave loaded", ToolTipIcon.Info);
@@ -61,12 +60,15 @@ namespace NOLFAutoRecorder
                 return;
             }
             WriteLog("Recording process started", ToolTipIcon.Info);
-            StartRecorder();
+            // StartRecorder();
+            Thread.Sleep(TimeSpan.FromSeconds(22));
+            WriteLog("Trigerring Berlin Scene One...", ToolTipIcon.Warning);
+            this.inputImpersonator.TriggerBerlinSceneOne();
         }
 
-        private void Application_ApplicationExit(object sender, EventArgs e)
+        private void OnApplicationExit(object sender, EventArgs e)
         {
-            StopRecorder();
+            // StopRecorder();
             StopProcess(pcsx2Process);
         }
 
@@ -134,31 +136,6 @@ namespace NOLFAutoRecorder
             catch
             {
             }
-        }
-
-        private void UpButton_Click(object sender, EventArgs e)
-        {
-            this.inputImpersonator.Advance();
-        }
-
-        private void LeftButton_Click(object sender, EventArgs e)
-        {
-            this.inputImpersonator.TurnLeft();
-        }
-
-        private void RightButton_Click(object sender, EventArgs e)
-        {
-            this.inputImpersonator.TurnRight();
-        }
-
-        private void DownButton_Click(object sender, EventArgs e)
-        {
-            this.inputImpersonator.GoBack();
-        }
-
-        private void AButton_Click(object sender, EventArgs e)
-        {
-            this.inputImpersonator.Interact();
         }
     }
 }
