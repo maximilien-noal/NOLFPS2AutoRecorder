@@ -57,6 +57,9 @@ namespace NOLFAutoRecorder.Automation
 
         }
 
+        /// <summary>
+        /// 9 lines available
+        /// </summary>
         public void TriggerBerlinSceneOne()
         {
             Advance();
@@ -64,8 +67,6 @@ namespace NOLFAutoRecorder.Automation
             Advance();
             Advance();
             Advance();
-            GoRight();
-            GoRight();
             GoRight();
             GoRight();
             Advance();

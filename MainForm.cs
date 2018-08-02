@@ -60,10 +60,10 @@ namespace NOLFAutoRecorder
                 return;
             }
             WriteLog("Recording process started", ToolTipIcon.Info);
-            // StartRecorder();
             Thread.Sleep(TimeSpan.FromSeconds(22));
             WriteLog("Trigerring Berlin Scene One...", ToolTipIcon.Warning);
             this.inputImpersonator.TriggerBerlinSceneOne();
+            // StartRecorder();
         }
 
         private void OnApplicationExit(object sender, EventArgs e)

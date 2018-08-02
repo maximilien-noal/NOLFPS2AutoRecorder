@@ -31,7 +31,13 @@ namespace NOLFAutoRecorder.Automation
             var fileStream = File.OpenWrite(file);
             fileStream.Position = startAddress;
 
+            for(int i = refVoiceIdToReplace; i <= refVoiceIdToReplace + numberOfVoices; i++)
+            {
+                int voiceIdToSeek = refVoiceIdToReplace + i;
+                int voiceIdToPut = startIdOfNextBatch + i;
 
+                
+            }
         }
     }
 }
