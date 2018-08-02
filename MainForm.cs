@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NOLFAutoRecorder.Automation;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -17,24 +18,10 @@ namespace NOLFAutoRecorder
 {
     public partial class MainForm : Form
     {
-        const int SW_MINIMIZE = 6;
-        const int SW_RESTORE = 9;
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SwitchToThisWindow(IntPtr hWnd, bool fromAltTab);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool ShowWindow(IntPtr hWnd, int swCommand);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SetActiveWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SetForegroundWindow(IntPtr hWnd);
-
+        
         IntPtr emulatorWindow = IntPtr.Zero;
         IntPtr emulatorViewPortWindow = IntPtr.Zero;
-
+        private InputImpersonator inputImpersonator;
         string pcsx2ExePath = @"C:\Jeux\PCSX2\PCSX2.EXE";
         string nolfPs2IsoPath = @"C:\Jeux\ISOs\NOLF.ISO";
 
@@ -61,8 +48,9 @@ namespace NOLFAutoRecorder
             emulatorWindow = pcsx2Process.MainWindowHandle;
             Thread.Sleep(TimeSpan.FromSeconds(13));
             emulatorViewPortWindow = WndFinder.SearchForWindow("wxWindowNR", "Slot");
+            this.inputImpersonator = new InputImpersonator(emulatorViewPortWindow);
             bool quickLoadSuccess = LoadQuickSave();
-            SetForegroundWindow(emulatorViewPortWindow);
+            WindowReorganizer.SetForegroundWindow(emulatorViewPortWindow);
             if (quickLoadSuccess)
             {
                 WriteLog("QuickSave loaded", ToolTipIcon.Info);
@@ -93,7 +81,7 @@ namespace NOLFAutoRecorder
             {
                 return false;
             }
-            SetActiveWindow(emulatorViewPortWindow);
+            WindowReorganizer.SetActiveWindow(emulatorViewPortWindow);
             new InputSimulator().Keyboard.KeyPress(VirtualKeyCode.F3);
             return true;
         }
@@ -146,6 +134,31 @@ namespace NOLFAutoRecorder
             catch
             {
             }
+        }
+
+        private void UpButton_Click(object sender, EventArgs e)
+        {
+            this.inputImpersonator.Advance();
+        }
+
+        private void LeftButton_Click(object sender, EventArgs e)
+        {
+            this.inputImpersonator.TurnLeft();
+        }
+
+        private void RightButton_Click(object sender, EventArgs e)
+        {
+            this.inputImpersonator.TurnRight();
+        }
+
+        private void DownButton_Click(object sender, EventArgs e)
+        {
+            this.inputImpersonator.GoBack();
+        }
+
+        private void AButton_Click(object sender, EventArgs e)
+        {
+            this.inputImpersonator.Interact();
         }
     }
 }

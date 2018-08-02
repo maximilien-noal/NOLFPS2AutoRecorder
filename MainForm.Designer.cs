@@ -72,6 +72,7 @@
             this.AButton.TabIndex = 10;
             this.AButton.Text = "A";
             this.AButton.UseVisualStyleBackColor = true;
+            this.AButton.Click += new System.EventHandler(this.AButton_Click);
             // 
             // RightButton
             // 
@@ -81,6 +82,7 @@
             this.RightButton.TabIndex = 9;
             this.RightButton.Text = "Right";
             this.RightButton.UseVisualStyleBackColor = true;
+            this.RightButton.Click += new System.EventHandler(this.RightButton_Click);
             // 
             // LeftButton
             // 
@@ -90,6 +92,7 @@
             this.LeftButton.TabIndex = 8;
             this.LeftButton.Text = "Left";
             this.LeftButton.UseVisualStyleBackColor = true;
+            this.LeftButton.Click += new System.EventHandler(this.LeftButton_Click);
             // 
             // DownButton
             // 
@@ -99,6 +102,7 @@
             this.DownButton.TabIndex = 7;
             this.DownButton.Text = "Down";
             this.DownButton.UseVisualStyleBackColor = true;
+            this.DownButton.Click += new System.EventHandler(this.DownButton_Click);
             // 
             // UpButton
             // 
@@ -108,6 +112,7 @@
             this.UpButton.TabIndex = 6;
             this.UpButton.Text = "Up";
             this.UpButton.UseVisualStyleBackColor = true;
+            this.UpButton.Click += new System.EventHandler(this.UpButton_Click);
             // 
             // MainForm
             // 

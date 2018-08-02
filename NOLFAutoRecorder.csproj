@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Automation\InputImpersonator.cs" />
     <Compile Include="Automation\ISOModifier.cs" />
+    <Compile Include="Automation\WindowReorganizer.cs" />
     <Compile Include="Automation\WndFinder.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
