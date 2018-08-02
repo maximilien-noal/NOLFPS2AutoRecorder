@@ -36,7 +36,7 @@ namespace NOLFAutoRecorder.Automation
                 int voiceIdToSeek = refVoiceIdToReplace + i;
                 int voiceIdToPut = startIdOfNextBatch + i;
 
-                
+                //TODO : Finish ISOModifier
             }
         }
     }

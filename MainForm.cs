@@ -63,12 +63,12 @@ namespace NOLFAutoRecorder
             Thread.Sleep(TimeSpan.FromSeconds(22));
             WriteLog("Trigerring Berlin Scene One...", ToolTipIcon.Warning);
             this.inputImpersonator.TriggerBerlinSceneOne();
-            // StartRecorder();
+            StartRecorder();
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            // StopRecorder();
+            StopRecorder();
             StopProcess(pcsx2Process);
         }
 
