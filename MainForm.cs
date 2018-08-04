@@ -2,13 +2,8 @@
 using NOLFAutoRecorder.Statistics;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -23,30 +18,37 @@ namespace NOLFAutoRecorder
         IntPtr emulatorWindow = IntPtr.Zero;
         IntPtr emulatorViewPortWindow = IntPtr.Zero;
         private InputImpersonator inputImpersonator;
-        string pcsx2ExePath = @"C:\Jeux\PCSX2\PCSX2.EXE";
-        string nolfPs2IsoPath = @"C:\Jeux\ISOs\NOLF.ISO";
+        readonly string pcsx2ExePath = Properties.Settings.Default.PCSX2ExePath;
+        const string nolfPs2IsoPath = @"C:\Jeux\ISOs\NOLF.ISO";
 
-        string fmediaPath = @"C:\Jeux\Outils\fmedia.exe";
-        string fmediaStartArgs = "--record --dev-loopback=0 --globcmd=listen -o ";
-        string fmediaStopArgs = "--globcmd=stop";
-        string fmediaWorkDir = @"C:\Jeux\ISOs\VOICE_FR\_Recordings";
+        readonly string fmediaPath = Properties.Settings.Default.FMediaExePath;
+        const string fmediaStartArgs = "--record --dev-loopback=0 --globcmd=listen -o ";
+        const string fmediaStopArgs = "--globcmd=stop";
+        readonly string fmediaWorkDir = Properties.Settings.Default.TempRecordingsWorkDir;
 
-        string voiceUsaDir = @"C:\Jeux\ISOs\VOICE_USA";
-
-        int tempRecordFileNameStart = 10521;
-
+        readonly string voiceUsaDir = Properties.Settings.Default.VoiceUsaDir;
+        
         System.Windows.Forms.Timer recordEndTimer = new System.Windows.Forms.Timer();
 
+        List<Action> endOfLifeActions = new List<Action>();
+
         DateTime recordEndTime = DateTime.Now;
+
+        static int currentBatchStartVoiceId = 10521;
+
+        static readonly int endVoiceId = 13757;
 
         Process pcsx2Process;
 
         public MainForm()
         {
             InitializeComponent();
+            endOfLifeActions.Add(StopRecorder);
+            endOfLifeActions.Add(() => StopProcess(pcsx2Process));
+            endOfLifeActions.Add(ISOModifier.UndoModifications);
             this.Shown += MainForm_Shown;
             Application.ApplicationExit += OnApplicationExit;
-            recordEndTimer.Interval = 400;
+            recordEndTimer.Interval = 200;
             recordEndTimer.Tick += RecordEndTimer_Tick;
         }
 
@@ -60,7 +62,16 @@ namespace NOLFAutoRecorder
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-            ISOModifier.PrepareNextBatch(nolfPs2IsoPath, 10504, tempRecordFileNameStart, 9);
+            int currentSceneStartVoiceId = 10504;
+            int numberOfVoicesAvailable = 9;
+            int currentBatchStart = 10520;
+            RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStart);
+        }
+
+        private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId)
+        {
+            recordEndTimer.Stop();
+            ISOModifier.PrepareNextBatch(nolfPs2IsoPath, startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
             pcsx2Process = StartPcsx2();
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
@@ -83,14 +94,16 @@ namespace NOLFAutoRecorder
             this.inputImpersonator.TriggerBerlinSceneOne();
             StartRecorder();
             recordEndTime = DateTime.Now;
-            recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(this.tempRecordFileNameStart, 9, voiceUsaDir));
+            recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(currentBatchStartId, numberOfVoicesAvailable, voiceUsaDir));
             recordEndTimer.Start();
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            StopRecorder();
-            StopProcess(pcsx2Process);
+            Parallel.ForEach(this.endOfLifeActions, action =>
+            {
+                action.Invoke();
+            });
         }
 
         void WriteLog(string message, ToolTipIcon icon)
@@ -130,11 +143,10 @@ namespace NOLFAutoRecorder
 
         string GetTempFileName()
         {
-            string tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_.wav", tempRecordFileNameStart));
-            while (File.Exists(tempFileName))
+            string tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_.wav", currentBatchStartVoiceId));
+            if(File.Exists(tempFileName))
             {
-                tempRecordFileNameStart++;
-                tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_.wav", tempRecordFileNameStart));
+                File.Delete(tempFileName);
             }
             return tempFileName;
         }

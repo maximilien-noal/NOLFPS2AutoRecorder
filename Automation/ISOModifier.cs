@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NOLFAutoRecorder.Statistics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -11,6 +12,7 @@ namespace NOLFAutoRecorder.Automation
     /// </summary>
     static internal class ISOModifier
     {
+
         static List<Tuple<long, int>> positionsAndOriginalValues = new List<Tuple<long, int>>();
 
         /// <summary>
@@ -51,8 +53,15 @@ namespace NOLFAutoRecorder.Automation
                         return;
                     }
 
-                    int voiceIdToSeek = refVoiceIdToReplace + i;
-                    int voiceIdToPut = startIdOfNextBatch + i;
+                    int voiceIdToSeek = refVoiceIdToReplace;
+                    int voiceIdToPut = startIdOfNextBatch;
+
+                    if (i >= 0)
+                    {
+                        voiceIdToSeek = SoundInfo.GetVoiceIdAt(refVoiceIdToReplace, i);
+                        voiceIdToPut = SoundInfo.GetVoiceIdAt(startIdOfNextBatch, i);
+                    }
+                    
                     string foundVoiceId = "";
 
                     while (binReader.BaseStream.Position >= binReader.BaseStream.Length)
