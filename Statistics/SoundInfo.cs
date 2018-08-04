@@ -13,13 +13,14 @@ namespace NOLFAutoRecorder.Statistics
             long lengthSumOfFiles = 0;
             for(int i = startVoiceId; i <= startVoiceId + numberOfFiles; i++)
             {
-                string fullFileName = string.Format(@"{0}\{1}.WAV", dirPath, i);
+                string fileName = string.Format("{0}.WAV", i);
+                string fullFileName = Path.Combine(dirPath, fileName);
                 if(File.Exists(fullFileName))
                 {
                     lengthSumOfFiles += GetSoundLength(fullFileName);
                 }
             }
-            return lengthSumOfFiles;
+            return Convert.ToInt64(Math.Round(lengthSumOfFiles * 1.2, 0));
         }
 
         [DllImport("winmm.dll")]

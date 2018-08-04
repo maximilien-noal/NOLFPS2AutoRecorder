@@ -130,11 +130,11 @@ namespace NOLFAutoRecorder
 
         string GetTempFileName()
         {
-            string tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}.wav", tempRecordFileNameStart));
+            string tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_.wav", tempRecordFileNameStart));
             while (File.Exists(tempFileName))
             {
                 tempRecordFileNameStart++;
-                tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}.wav", tempRecordFileNameStart));
+                tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_.wav", tempRecordFileNameStart));
             }
             return tempFileName;
         }
