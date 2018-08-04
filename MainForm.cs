@@ -1,4 +1,5 @@
 ﻿using NOLFAutoRecorder.Automation;
+using NOLFAutoRecorder.Statistics;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -30,7 +31,13 @@ namespace NOLFAutoRecorder
         string fmediaStopArgs = "--globcmd=stop";
         string fmediaWorkDir = @"C:\Jeux\ISOs\VOICE_FR\_Recordings";
 
+        string voiceUsaDir = @"C:\Jeux\ISOs\VOICE_USA";
+
         int tempRecordFileNameStart = 10521;
+
+        System.Windows.Forms.Timer recordEndTimer = new System.Windows.Forms.Timer();
+
+        DateTime recordEndTime = DateTime.Now;
 
         Process pcsx2Process;
 
@@ -39,10 +46,21 @@ namespace NOLFAutoRecorder
             InitializeComponent();
             this.Shown += MainForm_Shown;
             Application.ApplicationExit += OnApplicationExit;
+            recordEndTimer.Interval = 400;
+            recordEndTimer.Tick += RecordEndTimer_Tick;
+        }
+
+        private void RecordEndTimer_Tick(object sender, EventArgs e)
+        {
+            if(DateTime.Now.Ticks >= recordEndTime.Ticks)
+            {
+                Application.Exit();
+            }
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
+            ISOModifier.PrepareNextBatch(nolfPs2IsoPath, 10504, tempRecordFileNameStart, 9);
             pcsx2Process = StartPcsx2();
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
@@ -64,6 +82,9 @@ namespace NOLFAutoRecorder
             WriteLog("Trigerring Berlin Scene One...", ToolTipIcon.Warning);
             this.inputImpersonator.TriggerBerlinSceneOne();
             StartRecorder();
+            recordEndTime = DateTime.Now;
+            recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(this.tempRecordFileNameStart, 9, voiceUsaDir));
+            recordEndTimer.Start();
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
