@@ -94,7 +94,7 @@ namespace NOLFAutoRecorder
             this.inputImpersonator.TriggerBerlinSceneOne();
             StartRecorder();
             recordEndTime = DateTime.Now;
-            recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(currentBatchStartId, numberOfVoicesAvailable, voiceUsaDir));
+            recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(currentBatchStartId, numberOfVoicesAvailable));
             recordEndTimer.Start();
         }
 

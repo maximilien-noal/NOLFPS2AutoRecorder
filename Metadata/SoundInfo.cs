@@ -39,7 +39,7 @@ namespace NOLFAutoRecorder.Metadata
             return listOfAllUsaVoiceIDs[indexOfNextId];
         }
 
-        public static int GetVoiceIdAt(int previousId, int offset)
+        public static int GetVoiceIdAtOffsetFromVoiceId(int previousId, int offset)
         {
             int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(previousId);
             indexOfNextId += offset;
@@ -64,13 +64,24 @@ namespace NOLFAutoRecorder.Metadata
         }
 
 
-        public static long GetSoundLengthOfFiles(int startVoiceId, int numberOfFiles, string dirPath)
+        /// <summary>
+        /// Returns the sum of the length of several WAVE files, in seconds
+        /// </summary>
+        /// <param name="startVoiceId">The first voice ID of the batch</param>
+        /// <param name="numberOfFiles">The number of files to take </param>
+        /// <returns>The sum of the length of the sound files, plus 20% since we are recording French instead of English</returns>
+        public static long GetSoundLengthOfFiles(int startVoiceId, int numberOfFiles)
         {
             long lengthSumOfFiles = 0;
-            for(int i = startVoiceId; i <= startVoiceId + numberOfFiles; i++)
+            for(int i = 0; i < numberOfFiles; i++)
             {
-                string fileName = string.Format("{0}.WAV", i);
-                string fullFileName = Path.Combine(dirPath, fileName);
+                string fileName = string.Format("{0}.WAV", startVoiceId);
+                if(i > 0)
+                {
+                    string voiceId = GetNextVoiceId(startVoiceId).ToString();
+                    fileName = string.Format("{0}.WAV", voiceId);
+                }
+                string fullFileName = Path.Combine(Properties.Settings.Default.VoiceUsaDir, fileName);
                 if(File.Exists(fullFileName))
                 {
                     lengthSumOfFiles += GetSoundLength(fullFileName);
@@ -86,6 +97,11 @@ namespace NOLFAutoRecorder.Metadata
             int returnLength,
             IntPtr winHandle);
 
+        /// <summary>
+        /// Returns the length of the WAVE file, in seconds
+        /// </summary>
+        /// <param name="fileName">The WAVE file to test</param>
+        /// <returns>The result from the WINMM/MCI API</returns>
         private static int GetSoundLength(string fileName)
         {
 

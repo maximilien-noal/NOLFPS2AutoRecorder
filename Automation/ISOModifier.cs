@@ -46,25 +46,19 @@ namespace NOLFAutoRecorder.Automation
             {
                 binReader.BaseStream.Position = startAddress;
 
-                for (int i = refVoiceIdToReplace; i <= refVoiceIdToReplace + numberOfVoices; i++)
+                for (int i = 0; i < numberOfVoices; i++)
                 {
                     if (binReader.BaseStream.Position >= binReader.BaseStream.Length)
                     {
                         return;
                     }
 
-                    int voiceIdToSeek = refVoiceIdToReplace;
-                    int voiceIdToPut = startIdOfNextBatch;
-
-                    if (i >= 0)
-                    {
-                        voiceIdToSeek = SoundInfo.GetVoiceIdAt(refVoiceIdToReplace, i);
-                        voiceIdToPut = SoundInfo.GetVoiceIdAt(startIdOfNextBatch, i);
-                    }
+                    int voiceIdToSeek = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(refVoiceIdToReplace, i);
+                    int voiceIdToPut = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(startIdOfNextBatch, i);
                     
                     string foundVoiceId = "";
 
-                    while (binReader.BaseStream.Position >= binReader.BaseStream.Length)
+                    while (binReader.BaseStream.Position <= binReader.BaseStream.Length)
                     {
                         char character = binReader.ReadChar();
                         int readCharToInt = 0;
@@ -79,7 +73,7 @@ namespace NOLFAutoRecorder.Automation
                             break;
                         }
 
-                        if (foundVoiceId.Length == voiceIdToSeek.ToString().Length)
+                        if (foundVoiceId == voiceIdToSeek.ToString())
                         {
                             break;
                         }
