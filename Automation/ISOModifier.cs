@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace NOLFAutoRecorder.Automation
 {
@@ -19,7 +20,13 @@ namespace NOLFAutoRecorder.Automation
         /// static address in the ISO to search for voice lines IDs.
         /// Offset relative to the start of the ISO file
         /// </summary>
-        static long startAddress = Convert.ToInt64("B42EFE30", 16);
+        static long startAddress = Convert.ToInt64("B42F5B56", 16);
+
+        /// <summary>
+        /// static address in the ISO to end the search for voice lines IDs.
+        /// Offset relative to the start of the ISO file
+        /// </summary>
+        static long endAddress = Convert.ToInt64("EBDCFA5F", 16);
 
         static string isoFilePath = "";
 
@@ -34,20 +41,21 @@ namespace NOLFAutoRecorder.Automation
         {
             isoFilePath = file;
 
-            if(string.IsNullOrWhiteSpace(file) || File.Exists(isoFilePath) == false)
+            if (string.IsNullOrWhiteSpace(file) || File.Exists(isoFilePath) == false)
             {
                 return;
             }
 
             List<Tuple<long, int>> positionsToWriteToAndModifiedValues = new List<Tuple<long, int>>();
 
-            var binReader = new BinaryReader(File.OpenRead(file), Encoding.ASCII);
-            using (binReader)
+            for (int i = 0; i < numberOfVoices; i++)
             {
-                binReader.BaseStream.Position = startAddress;
-
-                for (int i = 0; i < numberOfVoices; i++)
+                var binReader = new BinaryReader(File.OpenRead(file));
+                using (binReader)
                 {
+                    binReader.BaseStream.Position = startAddress;
+
+
                     if (binReader.BaseStream.Position >= binReader.BaseStream.Length)
                     {
                         return;
@@ -55,28 +63,56 @@ namespace NOLFAutoRecorder.Automation
 
                     int voiceIdToSeek = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(refVoiceIdToReplace, i);
                     int voiceIdToPut = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(startIdOfNextBatch, i);
-                    
+
                     string foundVoiceId = "";
 
-                    while (binReader.BaseStream.Position <= binReader.BaseStream.Length)
+                    while (binReader.BaseStream.Position < endAddress)
                     {
-                        char character = binReader.ReadChar();
-                        int readCharToInt = 0;
-                        bool parsedIntSuccessfully = int.TryParse(character.ToString(), out readCharToInt);
-                        if (parsedIntSuccessfully)
+                        byte[] readBytArray = binReader.ReadBytes(voiceIdToSeek.ToString().Length - 1);
+                        string hexSequence = Encoding.ASCII.GetString(readBytArray);
+                        foreach(var readChar in hexSequence)
                         {
-                            foundVoiceId += readCharToInt.ToString();
-                        }
+                            int readCharToInt = 0;
+                            bool parsedIntSuccessfully = int.TryParse(readChar.ToString(), out readCharToInt);
+                            if (parsedIntSuccessfully)
+                            {
+                                foundVoiceId += readCharToInt.ToString();
+                            }
+                            else
+                            {
+                                foundVoiceId = "";
+                            }
 
-                        if(binReader.BaseStream.Position >= binReader.BaseStream.Length)
+                            if (foundVoiceId.Length == voiceIdToSeek.ToString().Length)
+                            {
+                                if (foundVoiceId == voiceIdToSeek.ToString())
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    foundVoiceId = "";
+                                }
+                            }
+                        }
+                        
+                        if (binReader.BaseStream.Position >= endAddress)
                         {
                             break;
                         }
 
-                        if (foundVoiceId == voiceIdToSeek.ToString())
+                        if (foundVoiceId.Length == voiceIdToSeek.ToString().Length)
                         {
-                            break;
+                            if (foundVoiceId == voiceIdToSeek.ToString())
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                foundVoiceId = "";
+                            }
                         }
+
                     }
 
                     long startPosOfFoundVoiceId = binReader.BaseStream.Position - Encoding.ASCII.GetByteCount(foundVoiceId.ToCharArray());
@@ -110,7 +146,7 @@ namespace NOLFAutoRecorder.Automation
         /// </summary>
         public static void UndoModifications()
         {
-            if(string.IsNullOrWhiteSpace(isoFilePath) || File.Exists(isoFilePath) == false)
+            if (string.IsNullOrWhiteSpace(isoFilePath) || File.Exists(isoFilePath) == false)
             {
                 return;
             }
