@@ -70,7 +70,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Statistics\SoundInfo.cs" />
+    <Compile Include="Metadata\SoundInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
