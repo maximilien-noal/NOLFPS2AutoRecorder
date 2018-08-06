@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,107 +29,66 @@ namespace NOLFAutoRecorder.Automation
         /// </summary>
         static long endAddress = Convert.ToInt64("EBDCFA5F", 16);
 
-        static string isoFilePath = "";
+        /// <summary>
+        /// The area of the ISO file containing voice IDs
+        /// </summary>
+        private static byte[] areaOfInterest;
+
+        static readonly string isoFilePath = Properties.Settings.Default.ISOPath;
 
         /// <summary>
         /// Modifies the ISO to make the next batch available to the recorder
         /// </summary>
-        /// <param name="file">Path to the ISO file</param>
         /// <param name="refVoiceIdToReplace">The real voice id of the first line of the scene</param>
         /// <param name="startIdOfNextBatch">Will replace the ref with this one, plus next 5 IDs (incremental)</param>
         /// <param name="numberOfVoices">The number of voices to replace</param>
-        public static void PrepareNextBatch(string file, int refVoiceIdToReplace, int startIdOfNextBatch, int numberOfVoices)
+        public static void PrepareNextBatch(int refVoiceIdToReplace, int startIdOfNextBatch, int numberOfVoices)
         {
-            isoFilePath = file;
 
-            if (string.IsNullOrWhiteSpace(file) || File.Exists(isoFilePath) == false)
+            if (string.IsNullOrWhiteSpace(isoFilePath) || File.Exists(isoFilePath) == false)
             {
                 return;
             }
 
             List<Tuple<long, int>> positionsToWriteToAndModifiedValues = new List<Tuple<long, int>>();
 
-            for (int i = 0; i < numberOfVoices; i++)
+            if(areaOfInterest == null)
             {
-                var binReader = new BinaryReader(File.OpenRead(file));
+                var binReader = new BinaryReader(File.OpenRead(isoFilePath));
                 using (binReader)
                 {
                     binReader.BaseStream.Position = startAddress;
-
-
-                    if (binReader.BaseStream.Position >= binReader.BaseStream.Length)
-                    {
-                        return;
-                    }
-
-                    int voiceIdToSeek = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(refVoiceIdToReplace, i);
-                    int voiceIdToPut = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(startIdOfNextBatch, i);
-
-                    string foundVoiceId = "";
-
-                    while (binReader.BaseStream.Position < endAddress)
-                    {
-                        byte[] readBytArray = binReader.ReadBytes(voiceIdToSeek.ToString().Length - 1);
-                        string hexSequence = Encoding.ASCII.GetString(readBytArray);
-                        foreach(var readChar in hexSequence)
-                        {
-                            int readCharToInt = 0;
-                            bool parsedIntSuccessfully = int.TryParse(readChar.ToString(), out readCharToInt);
-                            if (parsedIntSuccessfully)
-                            {
-                                foundVoiceId += readCharToInt.ToString();
-                            }
-                            else
-                            {
-                                foundVoiceId = "";
-                            }
-
-                            if (foundVoiceId.Length == voiceIdToSeek.ToString().Length)
-                            {
-                                if (foundVoiceId == voiceIdToSeek.ToString())
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    foundVoiceId = "";
-                                }
-                            }
-                        }
-                        
-                        if (binReader.BaseStream.Position >= endAddress)
-                        {
-                            break;
-                        }
-
-                        if (foundVoiceId.Length == voiceIdToSeek.ToString().Length)
-                        {
-                            if (foundVoiceId == voiceIdToSeek.ToString())
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                foundVoiceId = "";
-                            }
-                        }
-
-                    }
-
-                    long startPosOfFoundVoiceId = binReader.BaseStream.Position - Encoding.ASCII.GetByteCount(foundVoiceId.ToCharArray());
-                    int foundVoiceIdToInt = 0;
-                    int.TryParse(foundVoiceId, out foundVoiceIdToInt);
-
-                    positionsToWriteToAndModifiedValues.Add(new Tuple<long, int>(
-                        startPosOfFoundVoiceId,
-                        voiceIdToPut));
-                    positionsAndOriginalValues.Add(new Tuple<long, int>(
-                        startPosOfFoundVoiceId,
-                        foundVoiceIdToInt));
+                    areaOfInterest = binReader.ReadBytes((int)(endAddress - startAddress));
                 }
             }
 
-            var binWriter = new BinaryWriter(File.OpenRead(file), Encoding.ASCII);
+            Parallel.For(0, numberOfVoices, i =>
+            {
+                int voiceIdToSeek = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(refVoiceIdToReplace, i);
+                int voiceIdToPut = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(startIdOfNextBatch, i);
+
+                byte[] voiceIdToSeekAsByteArray = BitConverter.GetBytes(voiceIdToSeek);
+                if(BitConverter.IsLittleEndian)
+                {
+                    voiceIdToSeekAsByteArray = voiceIdToSeekAsByteArray.Reverse().ToArray();
+                }
+
+                int startPosOfFoundVoiceId = PatternAt(areaOfInterest, voiceIdToSeekAsByteArray);
+
+                if(startPosOfFoundVoiceId != -1)
+                {
+                    long finalPosInFile = startPosOfFoundVoiceId + startAddress;
+
+                    positionsToWriteToAndModifiedValues.Add(new Tuple<long, int>(
+                                        startPosOfFoundVoiceId,
+                                        voiceIdToPut));
+                    positionsAndOriginalValues.Add(new Tuple<long, int>(
+                        startPosOfFoundVoiceId,
+                        voiceIdToSeek));
+                }
+            });
+
+            var binWriter = new BinaryWriter(File.OpenRead(isoFilePath));
             binWriter.BaseStream.Position = startAddress;
             using (binWriter)
             {
@@ -139,6 +99,18 @@ namespace NOLFAutoRecorder.Automation
                 }
                 binWriter.Flush();
             }
+        }
+
+        private static int PatternAt(byte[] source, byte[] pattern)
+        {
+            for (int i = 0; i < source.Length; i++)
+            {
+                if (source.Skip(i).Take(pattern.Length).SequenceEqual(pattern))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         /// <summary>

@@ -58,5 +58,14 @@ namespace NOLFAutoRecorder.Properties {
                 return ((string)(this["FMediaExePath"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Jeux\\ISOs\\NOLF.ISO")]
+        public string ISOPath {
+            get {
+                return ((string)(this["ISOPath"]));
+            }
+        }
     }
 }
