@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ISOVoiceIDAddressCacheMaker.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ISOPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Jeux\ISOs\NOLF.ISO</Value>
+    </Setting>
+    <Setting Name="StartAddressOfScan" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">B42F5B56</Value>
+    </Setting>
+    <Setting Name="EndAddressOfScan" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">EBDCFA5F</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
