@@ -25,15 +25,6 @@ namespace NOLFAutoRecorder.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Jeux\\ISOs\\VOICE_USA")]
-        public string VoiceUsaDir {
-            get {
-                return ((string)(this["VoiceUsaDir"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("C:\\Jeux\\PCSX2\\PCSX2.EXE")]
         public string PCSX2ExePath {
             get {

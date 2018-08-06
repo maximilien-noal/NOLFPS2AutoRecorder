@@ -2,9 +2,6 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="NOLFAutoRecorder.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="VoiceUsaDir" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">C:\Jeux\ISOs\VOICE_USA</Value>
-    </Setting>
     <Setting Name="PCSX2ExePath" Type="System.String" Scope="Application">
       <Value Profile="(Default)">C:\Jeux\PCSX2\PCSX2.EXE</Value>
     </Setting>

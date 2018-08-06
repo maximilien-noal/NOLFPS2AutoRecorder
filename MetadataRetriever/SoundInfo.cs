@@ -4,12 +4,20 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace NOLFAutoRecorder.Metadata
+namespace MetadataRetriever
 {
     public static class SoundInfo
     {
         static List<int> listOfAllUsaVoiceIDs = SoundInfo.GetAllVoiceIDs(Properties.Settings.Default.VoiceUsaDir);
+
+        public static List<int> GetAllVoiceIDs()
+        {
+            int[] copy = new int[listOfAllUsaVoiceIDs.Count];
+            listOfAllUsaVoiceIDs.CopyTo(copy);
+            return copy.ToList();
+        }
 
         private static List<int> GetAllVoiceIDs(string dirPath)
         {
@@ -19,8 +27,7 @@ namespace NOLFAutoRecorder.Metadata
             {
                 var currentFile = directoryFiles[i];
                 string filenameAlone = Path.GetFileNameWithoutExtension(currentFile);
-                int voiceId = 0;
-                int.TryParse(filenameAlone, out voiceId);
+                int.TryParse(filenameAlone, out int voiceId);
                 voiceIds.Add(voiceId);
             }
             return voiceIds;
@@ -73,16 +80,16 @@ namespace NOLFAutoRecorder.Metadata
         public static long GetSoundLengthOfFiles(int startVoiceId, int numberOfFiles)
         {
             long lengthSumOfFiles = 0;
-            for(int i = 0; i < numberOfFiles; i++)
+            for (int i = 0; i < numberOfFiles; i++)
             {
                 string fileName = string.Format("{0}.WAV", startVoiceId);
-                if(i > 0)
+                if (i > 0)
                 {
                     string voiceId = GetNextVoiceId(startVoiceId).ToString();
                     fileName = string.Format("{0}.WAV", voiceId);
                 }
                 string fullFileName = Path.Combine(Properties.Settings.Default.VoiceUsaDir, fileName);
-                if(File.Exists(fullFileName))
+                if (File.Exists(fullFileName))
                 {
                     lengthSumOfFiles += GetSoundLength(fullFileName);
                 }
@@ -111,8 +118,7 @@ namespace NOLFAutoRecorder.Metadata
             mciSendString("status wave length", lengthBuf, lengthBuf.Capacity, IntPtr.Zero);
             mciSendString("close wave", null, 0, IntPtr.Zero);
 
-            int length = 0;
-            int.TryParse(lengthBuf.ToString(), out length);
+            int.TryParse(lengthBuf.ToString(), out int length);
 
             return length;
         }

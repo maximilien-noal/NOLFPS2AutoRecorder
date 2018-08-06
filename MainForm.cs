@@ -1,5 +1,5 @@
-﻿using NOLFAutoRecorder.Automation;
-using NOLFAutoRecorder.Metadata;
+﻿using MetadataRetriever;
+using NOLFAutoRecorder.Automation;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,8 +26,6 @@ namespace NOLFAutoRecorder
         const string fmediaStopArgs = "--globcmd=stop";
         readonly string fmediaWorkDir = Properties.Settings.Default.TempRecordingsWorkDir;
 
-        readonly string voiceUsaDir = Properties.Settings.Default.VoiceUsaDir;
-        
         System.Windows.Forms.Timer recordEndTimer = new System.Windows.Forms.Timer();
 
         List<Action> endOfLifeActions = new List<Action>();
@@ -124,20 +122,24 @@ namespace NOLFAutoRecorder
 
         Process StartPcsx2()
         {
-            var psi = new ProcessStartInfo();
-            psi.Arguments = nolfPs2IsoPath;
-            psi.WorkingDirectory = Path.GetDirectoryName(pcsx2ExePath);
-            psi.FileName = pcsx2ExePath;
+            var psi = new ProcessStartInfo
+            {
+                Arguments = nolfPs2IsoPath,
+                WorkingDirectory = Path.GetDirectoryName(pcsx2ExePath),
+                FileName = pcsx2ExePath
+            };
             return Process.Start(psi);
         }
 
         void StartRecorder()
         {
-            var psi = new ProcessStartInfo();
-            psi.Arguments = fmediaStartArgs + GetTempFileName();
-            psi.WorkingDirectory = fmediaWorkDir;
-            psi.FileName = fmediaPath;
-            psi.WindowStyle = ProcessWindowStyle.Minimized;
+            var psi = new ProcessStartInfo
+            {
+                Arguments = fmediaStartArgs + GetTempFileName(),
+                WorkingDirectory = fmediaWorkDir,
+                FileName = fmediaPath,
+                WindowStyle = ProcessWindowStyle.Minimized
+            };
             Process.Start(psi);
         }
 
