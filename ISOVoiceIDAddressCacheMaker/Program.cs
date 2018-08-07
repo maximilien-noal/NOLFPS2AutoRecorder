@@ -27,9 +27,17 @@ namespace ISOVoiceIDAddressCacheMaker
             List<Tuple<string, int>> listeOfPositionsAndVoiceId = new List<Tuple<string, int>>();
 
             string logFilePath = Path.Combine(workDir, "output.log");
+            List<string> logLines = new List<string>();
             if(File.Exists(logFilePath))
             {
                 File.Delete(logFilePath);
+            }
+
+            string errorsLogFilePath = Path.Combine(workDir, "errors.log");
+            List<string> errorsLines = new List<string>();
+            if (File.Exists(errorsLogFilePath))
+            {
+                File.Delete(errorsLogFilePath);
             }
 
             string outputFilePath = Path.Combine(workDir, "VoiceIDsAddressesCache.csv");
@@ -46,49 +54,61 @@ namespace ISOVoiceIDAddressCacheMaker
 
             using (binReader)
             {
-                var areaOfInterest = binReader.ReadBytes((int)(binReader.BaseStream.Length /2));
+                var areaOfInterest = binReader.ReadBytes((int)(binReader.BaseStream.Length - binReader.BaseStream.Position));
 
-                foreach(var voiceIdToSeek in listeOfVoiceIDsToFind)
+                Parallel.ForEach(listeOfVoiceIDsToFind, voiceIdToSeek =>
                 {
                     byte[] voiceIdToSeekAsByteArray = ASCIIEncoding.ASCII.GetBytes(voiceIdToSeek.ToString());
 
                     List<byte> voiceIdSurroundedByZeroes = new List<byte>();
+                    List<byte> voiceIdTailedWithZero = new List<byte>();
+
                     //To avoid false positives
                     voiceIdSurroundedByZeroes.Add(BitConverter.GetBytes(0)[0]);
-
                     voiceIdSurroundedByZeroes.AddRange(voiceIdToSeekAsByteArray);
+                    voiceIdTailedWithZero.AddRange(voiceIdToSeekAsByteArray);
+                    //To avoid false positives
+                    voiceIdSurroundedByZeroes.Add(BitConverter.GetBytes(0)[0]);
+                    voiceIdTailedWithZero.Add(BitConverter.GetBytes(0)[0]);
 
-                    voiceIdToSeekAsByteArray = voiceIdSurroundedByZeroes.ToArray();
+                    int indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdSurroundedByZeroes.ToArray());
 
-                    int indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdToSeekAsByteArray);
+                    if (indexOfVoiceId != -1)
+                    {
+                        indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdTailedWithZero.ToArray());
+                    }
 
-                    if(indexOfVoiceId != -1)
+                    if (indexOfVoiceId != -1)
                     {
                         long finalIndex = indexOfVoiceId + startPos;
 
-                        string logLineVoiceId = @"index found for voiceID : " + voiceIdToSeek + "->" + Convert.ToString(finalIndex, 16) + Environment.NewLine;
+                        string logLineVoiceId = @"index found for voiceID : " + voiceIdToSeek + "->" + Convert.ToString(finalIndex, 16);
                         Console.WriteLine(logLineVoiceId);
-                        File.AppendAllLines(logFilePath, new string[] { logLineVoiceId });
+                        logLines.Add(logLineVoiceId);
 
                         listeOfPositionsAndVoiceId.Add(new Tuple<string, int>(Convert.ToString(finalIndex, 16), voiceIdToSeek));
                     }
                     else
                     {
-                        string logLineFailure = @"/!\ index NOT found for voiceID : " + voiceIdToSeek + Environment.NewLine;
-                        File.AppendAllLines(logFilePath, new string[] { logLineFailure });
+                        string logLineFailure = @"/!\ index NOT found for voiceID : " + voiceIdToSeek;
+                        logLines.Add(logLineFailure);
+                        errorsLines.Add(logLineFailure);
                         Console.WriteLine(logLineFailure);
+                        listeOfPositionsAndVoiceId.Add(new Tuple<string, int>(indexOfVoiceId.ToString(), voiceIdToSeek));
                     }
-                }
+                });
             }
 
             string logLine = "Writing results to " + outputFilePath;
-            File.AppendAllLines(logFilePath, new string[] { logLine });
+            logLines.Add(logLine);
             Console.WriteLine(logLine);
 
+            File.AppendAllLines(logFilePath, logLines.ToArray());
+            File.AppendAllLines(errorsLogFilePath, errorsLines.ToArray());
 
             List<string> outputContent = new List<string>();
 
-            Parallel.ForEach(listeOfPositionsAndVoiceId, IndexAndVoiceId =>
+            Parallel.ForEach(listeOfPositionsAndVoiceId.AsParallel().OrderBy(x => x.Item2), IndexAndVoiceId =>
             {
                 string line = string.Format("{0};{1}", IndexAndVoiceId.Item1, IndexAndVoiceId.Item2.ToString());
                 outputContent.Add(line);
