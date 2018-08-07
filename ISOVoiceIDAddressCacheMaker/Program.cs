@@ -115,7 +115,7 @@ namespace ISOVoiceIDAddressCacheMaker
             if (searchIn.Length > 0 && searchBytes.Length > 0 && 0 <= (searchIn.Length - searchBytes.Length) && searchIn.Length >= searchBytes.Length)
             {
                 //iterate through the array to be searched
-                for(int i = 0; i < searchIn.Length; i++)
+                for (int i = 0; i <= searchIn.Length - searchBytes.Length; i++)
                 {
                     //if the start bytes match we will start comparing all other bytes
                     if (searchIn[i] == searchBytes[0])
@@ -138,6 +138,7 @@ namespace ISOVoiceIDAddressCacheMaker
                                 found = i;
                                 break;
                             }
+
                         }
                         else
                         {
@@ -145,8 +146,10 @@ namespace ISOVoiceIDAddressCacheMaker
                             found = i;
                             break; //stop the loop
                         }
+
                     }
                 }
+
             }
             return found;
         }
