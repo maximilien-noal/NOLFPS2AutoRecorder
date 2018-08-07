@@ -21,7 +21,7 @@ namespace ISOVoiceIDAddressCacheMaker
             string isoFile = Properties.Settings.Default.ISOPath;
             string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             long startPos = Convert.ToInt64(Properties.Settings.Default.StartAddressOfScan, 16);
-            long endPos = Convert.ToInt64(Properties.Settings.Default.EndAddressOfScan, 16);
+            // long endPos = Convert.ToInt64(Properties.Settings.Default.EndAddressOfScan, 16);
             var listeOfVoiceIDsToFind = SoundInfo.GetAllVoiceIDs();
 
             List<Tuple<string, int>> listeOfPositionsAndVoiceId = new List<Tuple<string, int>>();
@@ -46,15 +46,19 @@ namespace ISOVoiceIDAddressCacheMaker
 
             using (binReader)
             {
-                var areaOfInterest = binReader.ReadBytes((int)(endPos - startPos));
+                var areaOfInterest = binReader.ReadBytes((int)(binReader.BaseStream.Length /2));
 
                 foreach(var voiceIdToSeek in listeOfVoiceIDsToFind)
                 {
-                    byte[] voiceIdToSeekAsByteArray = BitConverter.GetBytes(voiceIdToSeek);
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        voiceIdToSeekAsByteArray = voiceIdToSeekAsByteArray.Reverse().ToArray();
-                    }
+                    byte[] voiceIdToSeekAsByteArray = ASCIIEncoding.ASCII.GetBytes(voiceIdToSeek.ToString());
+
+                    List<byte> voiceIdSurroundedByZeroes = new List<byte>();
+                    //To avoid false positives
+                    voiceIdSurroundedByZeroes.Add(BitConverter.GetBytes(0)[0]);
+
+                    voiceIdSurroundedByZeroes.AddRange(voiceIdToSeekAsByteArray);
+
+                    voiceIdToSeekAsByteArray = voiceIdSurroundedByZeroes.ToArray();
 
                     int indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdToSeekAsByteArray);
 
@@ -110,12 +114,8 @@ namespace ISOVoiceIDAddressCacheMaker
             //only look at this if we have a populated search array and search bytes with a sensible start
             if (searchIn.Length > 0 && searchBytes.Length > 0 && 0 <= (searchIn.Length - searchBytes.Length) && searchIn.Length >= searchBytes.Length)
             {
-                CancellationTokenSource cancellationSource = new CancellationTokenSource();
-                ParallelOptions options = new ParallelOptions();
-                options.CancellationToken = cancellationSource.Token;
-
                 //iterate through the array to be searched
-                Parallel.For(0, searchIn.Length - searchBytes.Length + 1, i =>
+                for(int i = 0; i < searchIn.Length; i++)
                 {
                     //if the start bytes match we will start comparing all other bytes
                     if (searchIn[i] == searchBytes[0])
@@ -136,19 +136,17 @@ namespace ISOVoiceIDAddressCacheMaker
                             if (matched)
                             {
                                 found = i;
-                                cancellationSource.Cancel();
+                                break;
                             }
-
                         }
                         else
                         {
                             //search byte is only one bit nothing else to do
                             found = i;
-                            cancellationSource.Cancel(); //stop the loop
+                            break; //stop the loop
                         }
-
                     }
-                });
+                }
             }
             return found;
         }

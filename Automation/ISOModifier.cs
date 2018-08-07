@@ -21,7 +21,7 @@ namespace NOLFAutoRecorder.Automation
         /// static address in the ISO to search for voice lines IDs.
         /// Offset relative to the start of the ISO file
         /// </summary>
-        static long startAddress = Convert.ToInt64("B42F5B56", 16);
+        static long startAddress = Convert.ToInt64("B42EFE30", 16);
 
         /// <summary>
         /// static address in the ISO to end the search for voice lines IDs.
