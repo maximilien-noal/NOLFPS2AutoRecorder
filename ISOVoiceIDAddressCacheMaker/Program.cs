@@ -80,6 +80,11 @@ namespace ISOVoiceIDAddressCacheMaker
 
                     if (indexOfVoiceId != -1)
                     {
+                        indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdToSeekAsByteArray);
+                    }
+
+                    if (indexOfVoiceId != -1)
+                    {
                         long finalIndex = indexOfVoiceId + startPos;
 
                         string logLineVoiceId = @"index found for voiceID : " + voiceIdToSeek + "->" + Convert.ToString(finalIndex, 16);
