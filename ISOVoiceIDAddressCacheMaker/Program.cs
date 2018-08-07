@@ -62,10 +62,13 @@ namespace ISOVoiceIDAddressCacheMaker
 
                     List<byte> voiceIdSurroundedByZeroes = new List<byte>();
                     List<byte> voiceIdTailedWithZero = new List<byte>();
+                    List<byte> voiceIdPrefixedWithZero = new List<byte>();
 
                     //To avoid false positives
+                    voiceIdPrefixedWithZero.Add(BitConverter.GetBytes(0)[0]);
                     voiceIdSurroundedByZeroes.Add(BitConverter.GetBytes(0)[0]);
                     voiceIdSurroundedByZeroes.AddRange(voiceIdToSeekAsByteArray);
+                    voiceIdPrefixedWithZero.AddRange(voiceIdToSeekAsByteArray);
                     voiceIdTailedWithZero.AddRange(voiceIdToSeekAsByteArray);
                     //To avoid false positives
                     voiceIdSurroundedByZeroes.Add(BitConverter.GetBytes(0)[0]);
@@ -73,12 +76,17 @@ namespace ISOVoiceIDAddressCacheMaker
 
                     int indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdSurroundedByZeroes.ToArray());
 
-                    if (indexOfVoiceId != -1)
+                    if (indexOfVoiceId == -1)
+                    {
+                        indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdPrefixedWithZero.ToArray());
+                    }
+
+                    if (indexOfVoiceId == -1)
                     {
                         indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdTailedWithZero.ToArray());
                     }
-
-                    if (indexOfVoiceId != -1)
+                    
+                    if (indexOfVoiceId == -1)
                     {
                         indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdToSeekAsByteArray);
                     }
