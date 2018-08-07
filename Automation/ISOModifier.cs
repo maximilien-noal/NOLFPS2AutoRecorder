@@ -3,8 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace NOLFAutoRecorder.Automation
 {
@@ -14,27 +14,20 @@ namespace NOLFAutoRecorder.Automation
     /// </summary>
     static internal class ISOModifier
     {
-
-        static List<Tuple<long, int>> positionsAndOriginalValues = new List<Tuple<long, int>>();
+        /// <summary>
+        /// Cache of all positions and values of each reference to a voice ID in the ISO file
+        /// </summary>
+        static List<Tuple<long, int>> voiceIDsPositionsAndValueCache;
 
         /// <summary>
         /// static address in the ISO to search for voice lines IDs.
         /// Offset relative to the start of the ISO file
         /// </summary>
-        static long startAddress = Convert.ToInt64("B42EFE30", 16);
-
-        /// <summary>
-        /// static address in the ISO to end the search for voice lines IDs.
-        /// Offset relative to the start of the ISO file
-        /// </summary>
-        static long endAddress = Convert.ToInt64("EBDCFA5F", 16);
-
-        /// <summary>
-        /// The area of the ISO file containing voice IDs
-        /// </summary>
-        private static byte[] areaOfInterest;
-
+        static readonly long startAddress = Convert.ToInt64("B42EFE30", 16);
+        
         static readonly string isoFilePath = Properties.Settings.Default.ISOPath;
+
+        static readonly string cacheFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"Resources\VoiceIDsAddressesCache.csv");
 
         /// <summary>
         /// Modifies the ISO to make the next batch available to the recorder
@@ -47,48 +40,32 @@ namespace NOLFAutoRecorder.Automation
 
             if (string.IsNullOrWhiteSpace(isoFilePath) || File.Exists(isoFilePath) == false)
             {
-                return;
+                throw new InvalidOperationException("Fichier ISO introuvable ou chemin non renseigné");
             }
+
+            LazyLoadCache();
 
             List<Tuple<long, int>> positionsToWriteToAndModifiedValues = new List<Tuple<long, int>>();
 
-            if(areaOfInterest == null)
-            {
-                var binReader = new BinaryReader(File.OpenRead(isoFilePath));
-                using (binReader)
-                {
-                    binReader.BaseStream.Position = startAddress;
-                    areaOfInterest = binReader.ReadBytes((int)(endAddress - startAddress));
-                }
-            }
-
-            Parallel.For(0, numberOfVoices, i =>
+            for (int i = 0; i < numberOfVoices; i++)
             {
                 int voiceIdToSeek = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(refVoiceIdToReplace, i);
                 int voiceIdToPut = SoundInfo.GetVoiceIdAtOffsetFromVoiceId(startIdOfNextBatch, i);
 
-                byte[] voiceIdToSeekAsByteArray = BitConverter.GetBytes(voiceIdToSeek);
-                if(BitConverter.IsLittleEndian)
+                if (voiceIDsPositionsAndValueCache.Any(x => x.Item2 == voiceIdToSeek))
                 {
-                    voiceIdToSeekAsByteArray = voiceIdToSeekAsByteArray.Reverse().ToArray();
+                    long positionInFile = voiceIDsPositionsAndValueCache.Where(x => x.Item2 == voiceIdToSeek).FirstOrDefault().Item1;
+
+                    if (positionInFile != 0)
+                    {
+                        positionsToWriteToAndModifiedValues.Add(new Tuple<long, int>(
+                                            positionInFile,
+                                            voiceIdToPut));
+                    }
                 }
+            }
 
-                int startPosOfFoundVoiceId = PatternAt(areaOfInterest, voiceIdToSeekAsByteArray);
-
-                if(startPosOfFoundVoiceId != -1)
-                {
-                    long finalPosInFile = startPosOfFoundVoiceId + startAddress;
-
-                    positionsToWriteToAndModifiedValues.Add(new Tuple<long, int>(
-                                        startPosOfFoundVoiceId,
-                                        voiceIdToPut));
-                    positionsAndOriginalValues.Add(new Tuple<long, int>(
-                        startPosOfFoundVoiceId,
-                        voiceIdToSeek));
-                }
-            });
-
-            var binWriter = new BinaryWriter(File.OpenRead(isoFilePath));
+            var binWriter = new BinaryWriter(File.OpenWrite(isoFilePath), Encoding.ASCII);
             binWriter.BaseStream.Position = startAddress;
             using (binWriter)
             {
@@ -101,16 +78,26 @@ namespace NOLFAutoRecorder.Automation
             }
         }
 
-        private static int PatternAt(byte[] source, byte[] pattern)
+        private static void LazyLoadCache()
         {
-            for (int i = 0; i < source.Length; i++)
+            if (voiceIDsPositionsAndValueCache == null)
             {
-                if (source.Skip(i).Take(pattern.Length).SequenceEqual(pattern))
+                voiceIDsPositionsAndValueCache = new List<Tuple<long, int>>();
+                if (File.Exists(cacheFilePath) == false)
                 {
-                    return i;
+                    throw new InvalidOperationException("Fichier cache introuvable ou chemin non renseigné");
+                }
+                foreach (var line in File.ReadAllLines(cacheFilePath))
+                {
+                    string[] splittedLine = line.Split(';');
+                    if (splittedLine[0] == "-1")
+                    {
+                        splittedLine[0] = "0";
+                    }
+                    var entry = new Tuple<long, int>(Convert.ToInt64(splittedLine[0], 16), int.Parse(splittedLine[1]));
+                    voiceIDsPositionsAndValueCache.Add(entry);
                 }
             }
-            return -1;
         }
 
         /// <summary>
@@ -120,14 +107,16 @@ namespace NOLFAutoRecorder.Automation
         {
             if (string.IsNullOrWhiteSpace(isoFilePath) || File.Exists(isoFilePath) == false)
             {
-                return;
+                throw new InvalidOperationException("Fichier ISO introuvable ou chemin non renseigné");
             }
 
-            var binWriter = new BinaryWriter(File.OpenRead(isoFilePath), Encoding.ASCII);
+            LazyLoadCache();
+
+            var binWriter = new BinaryWriter(File.OpenWrite(isoFilePath), Encoding.ASCII);
             binWriter.BaseStream.Position = startAddress;
             using (binWriter)
             {
-                foreach (var positionAndOriginalValue in positionsAndOriginalValues)
+                foreach (var positionAndOriginalValue in voiceIDsPositionsAndValueCache)
                 {
                     binWriter.BaseStream.Position = positionAndOriginalValue.Item1;
                     binWriter.Write(positionAndOriginalValue.Item2);

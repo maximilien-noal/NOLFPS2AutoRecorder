@@ -16,7 +16,7 @@ namespace MetadataRetriever
         {
             int[] copy = new int[listOfAllUsaVoiceIDs.Count];
             listOfAllUsaVoiceIDs.CopyTo(copy);
-            return copy.ToList();
+            return copy.OrderBy(x => x).ToList();
         }
 
         private static List<int> GetAllVoiceIDs(string dirPath)
@@ -120,7 +120,7 @@ namespace MetadataRetriever
 
             int.TryParse(lengthBuf.ToString(), out int length);
 
-            return length;
+            return length / 1000;
         }
     }
 }

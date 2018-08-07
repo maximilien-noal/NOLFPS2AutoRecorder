@@ -14,7 +14,6 @@ namespace NOLFAutoRecorder
 {
     public partial class MainForm : Form
     {
-        
         IntPtr emulatorWindow = IntPtr.Zero;
         IntPtr emulatorViewPortWindow = IntPtr.Zero;
         private InputImpersonator inputImpersonator;
@@ -34,13 +33,12 @@ namespace NOLFAutoRecorder
 
         static int currentBatchStartVoiceId = 10521;
 
-        static readonly int endVoiceId = 13757;
-
         Process pcsx2Process;
 
         public MainForm()
         {
             InitializeComponent();
+            ISOModifier.UndoModifications();
             endOfLifeActions.Add(StopRecorder);
             endOfLifeActions.Add(() => StopProcess(pcsx2Process));
             endOfLifeActions.Add(ISOModifier.UndoModifications);
@@ -69,7 +67,7 @@ namespace NOLFAutoRecorder
         private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId)
         {
             recordEndTimer.Stop();
-            ISOModifier.PrepareNextBatch(startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
+            //ISOModifier.PrepareNextBatch(startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
             pcsx2Process = StartPcsx2();
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
