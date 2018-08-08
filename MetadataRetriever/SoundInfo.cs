@@ -33,9 +33,9 @@ namespace MetadataRetriever
             return voiceIds;
         }
 
-        public static int GetNextVoiceId(int previousId)
+        public static int GetNextVoiceId(int voiceId)
         {
-            int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(previousId);
+            int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(voiceId);
             indexOfNextId = indexOfNextId + 1;
             if (indexOfNextId <= 0 || indexOfNextId > listOfAllUsaVoiceIDs.Count - 1)
             {
@@ -46,9 +46,9 @@ namespace MetadataRetriever
             return listOfAllUsaVoiceIDs[indexOfNextId];
         }
 
-        public static int GetVoiceIdAtOffsetFromVoiceId(int previousId, int offset)
+        public static int GetVoiceIdAtOffsetFromVoiceId(int voiceId, int offset)
         {
-            int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(previousId);
+            int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(voiceId);
             indexOfNextId += offset;
             if (indexOfNextId <= 0 || indexOfNextId > listOfAllUsaVoiceIDs.Count - 1)
             {
@@ -58,9 +58,9 @@ namespace MetadataRetriever
             return listOfAllUsaVoiceIDs[indexOfNextId];
         }
 
-        public static List<int> GetNextVoiceIds(int previousId, int count)
+        public static List<int> GetNextVoiceIds(int voiceId, int count)
         {
-            int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(previousId);
+            int indexOfNextId = listOfAllUsaVoiceIDs.IndexOf(voiceId);
             indexOfNextId = indexOfNextId + 1;
             if (indexOfNextId <= 0 || indexOfNextId > listOfAllUsaVoiceIDs.Count - 1)
             {
@@ -77,9 +77,9 @@ namespace MetadataRetriever
         /// <param name="startVoiceId">The first voice ID of the batch</param>
         /// <param name="numberOfFiles">The number of files to take </param>
         /// <returns>The sum of the length of the sound files, plus 20% since we are recording French instead of English</returns>
-        public static long GetSoundLengthOfFiles(int startVoiceId, int numberOfFiles)
+        public static int GetSoundLengthOfFiles(int startVoiceId, int numberOfFiles)
         {
-            long lengthSumOfFiles = 0;
+            int lengthSumOfFiles = 0;
             for (int i = 0; i < numberOfFiles; i++)
             {
                 string fileName = string.Format("{0}.WAV", startVoiceId);
@@ -91,10 +91,10 @@ namespace MetadataRetriever
                 string fullFileName = Path.Combine(Properties.Settings.Default.VoiceUsaDir, fileName);
                 if (File.Exists(fullFileName))
                 {
-                    lengthSumOfFiles += GetSoundLength(fullFileName);
+                    lengthSumOfFiles += (int)GetSoundLength(fullFileName);
                 }
             }
-            return Convert.ToInt64(Math.Round(lengthSumOfFiles * 1.2, 0));
+            return Convert.ToInt32(lengthSumOfFiles);
         }
 
         [DllImport("winmm.dll")]
@@ -105,11 +105,11 @@ namespace MetadataRetriever
             IntPtr winHandle);
 
         /// <summary>
-        /// Returns the length of the WAVE file, in seconds
+        /// Returns the length of the WAVE file, in milliseconds
         /// </summary>
         /// <param name="fileName">The WAVE file to test</param>
         /// <returns>The result from the WINMM/MCI API</returns>
-        private static int GetSoundLength(string fileName)
+        private static decimal GetSoundLength(string fileName)
         {
 
             StringBuilder lengthBuf = new StringBuilder(32);
@@ -119,8 +119,8 @@ namespace MetadataRetriever
             mciSendString("close wave", null, 0, IntPtr.Zero);
 
             int.TryParse(lengthBuf.ToString(), out int length);
-
-            return length * 1000;
+            
+            return Math.Round((decimal)length / 1000, 0);
         }
     }
 }

@@ -25,54 +25,59 @@ namespace NOLFAutoRecorder
         const string fmediaStopArgs = "--globcmd=stop";
         readonly string fmediaWorkDir = Properties.Settings.Default.TempRecordingsWorkDir;
 
-        System.Windows.Forms.Timer recordEndTimer = new System.Windows.Forms.Timer();
+        List<Action> endOfRecordSessionActions = new List<Action>();
 
-        List<Action> endOfLifeActions = new List<Action>();
-
-        DateTime recordEndTime = DateTime.Now;
-
-        static int currentBatchStartVoiceId = 10521;
+        DateTime recordEndTime = DateTime.MinValue;
 
         Process pcsx2Process;
 
         public MainForm()
         {
             InitializeComponent();
+
             ISOModifier.UndoModifications();
-            endOfLifeActions.Add(StopRecorder);
-            endOfLifeActions.Add(() => StopProcess(pcsx2Process));
-            endOfLifeActions.Add(() => Thread.Sleep(5));
-            endOfLifeActions.Add(ISOModifier.UndoModifications);
+
+            endOfRecordSessionActions.Add(StopRecorder);
+            endOfRecordSessionActions.Add(() => StopProcess(pcsx2Process));
+
             this.Shown += MainForm_Shown;
             Application.ApplicationExit += OnApplicationExit;
-            recordEndTimer.Interval = 200;
-            recordEndTimer.Tick += RecordEndTimer_Tick;
-        }
-
-        private void RecordEndTimer_Tick(object sender, EventArgs e)
-        {
-            if(DateTime.Now.Ticks >= recordEndTime.Ticks)
-            {
-                Application.Exit();
-            }
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-            int currentSceneStartVoiceId = 10504;
-            int numberOfVoicesAvailable = 9;
-            int currentBatchStart = 10520;
-            RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStart);
+            RecordBerlinSceneOne();
         }
 
-        private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId)
+        private void RecordBerlinSceneOne()
         {
-            recordEndTimer.Stop();
+            int currentSceneStartVoiceId = 10504; //always the same ID
+            int numberOfVoicesAvailable = 9; //number of lines in the dialogue used
+            int currentBatchStartId = 10520; //loop over it until the voice ID no longer belongs to the Scene
+            int currentSceneLastVoiceId = 10600; //Wild guess...
+            var triggerAction = new Action(() =>
+            {
+                WriteLog("Activating Berlin Scene One dialogue...", ToolTipIcon.Warning);
+                this.inputImpersonator.TriggerBerlinSceneOne();
+            });
+            
+            //The ID are linear between 10520 and 10600, so we can simply loop over it with a for,
+            // but other scenes will need a different loop
+            for (int i = currentBatchStartId; i <= currentSceneLastVoiceId; i++)
+            {
+                RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStartId, triggerAction);
+                WaitSeconds(SoundInfo.GetSoundLengthOfFiles(i, currentSceneLastVoiceId - currentBatchStartId));
+            }
+        }
+
+        private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId, Action activationAction)
+        {
             ISOModifier.PrepareNextBatch(startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
             pcsx2Process = StartPcsx2();
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
-            Thread.Sleep(TimeSpan.FromSeconds(12));
+            //Wait for the emulator to load the main screen...
+            WaitSeconds(12);
             emulatorViewPortWindow = WndFinder.SearchForWindow("wxWindowNR", "Slot");
             this.inputImpersonator = new InputImpersonator(emulatorViewPortWindow);
             bool quickLoadSuccess = LoadQuickSave();
@@ -85,22 +90,27 @@ namespace NOLFAutoRecorder
                 WriteLog("QuickSave NOT loaded !", ToolTipIcon.Error);
                 return;
             }
-            WriteLog("Recording process started", ToolTipIcon.Info);
-            Thread.Sleep(TimeSpan.FromSeconds(22));
-            WriteLog("Trigerring Berlin Scene One...", ToolTipIcon.Warning);
-            this.inputImpersonator.TriggerBerlinSceneOne();
-            StartRecorder();
-            recordEndTime = DateTime.Now;
-            recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(currentBatchStartId, numberOfVoicesAvailable));
-            // recordEndTimer.Start(); <- too fast, disabled for now
+            //Wait for the quicksave to be loaded
+            WaitSeconds(22);
+            activationAction.Invoke();
+            StartRecorder(currentBatchStartId, numberOfVoicesAvailable);
+        }
+
+        private static void WaitSeconds(int seconds)
+        {
+            var whenEmulatorReady = DateTime.Now.AddSeconds(seconds);
+            while (DateTime.Now < whenEmulatorReady)
+            {
+                Application.DoEvents();
+            }
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            foreach(var action in this.endOfLifeActions)
+            Parallel.ForEach(endOfRecordSessionActions, action =>
             {
                 action.Invoke();
-            }
+            });
         }
 
         void WriteLog(string message, ToolTipIcon icon)
@@ -127,24 +137,26 @@ namespace NOLFAutoRecorder
                 WorkingDirectory = Path.GetDirectoryName(pcsx2ExePath),
                 FileName = pcsx2ExePath
             };
+            WriteLog("Emulator started", ToolTipIcon.Info);
             return Process.Start(psi);
         }
 
-        void StartRecorder()
+        void StartRecorder(int currentBatchStartId, int numberOfVoicesAvailable)
         {
             var psi = new ProcessStartInfo
             {
-                Arguments = fmediaStartArgs + GetTempFileName(),
+                Arguments = fmediaStartArgs + GetTempFileName(currentBatchStartId, numberOfVoicesAvailable),
                 WorkingDirectory = fmediaWorkDir,
                 FileName = fmediaPath,
                 WindowStyle = ProcessWindowStyle.Minimized
             };
             Process.Start(psi);
+            WriteLog("Recording process started", ToolTipIcon.Info);
         }
 
-        string GetTempFileName()
+        string GetTempFileName(int currentBatchStartId, int numberOfVoicesAvailable)
         {
-            string tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_.wav", currentBatchStartVoiceId));
+            string tempFileName = Path.Combine(fmediaWorkDir, string.Format("{0}_{1}.wav", currentBatchStartId, SoundInfo.GetVoiceIdAtOffsetFromVoiceId(currentBatchStartId, numberOfVoicesAvailable)));
             if(File.Exists(tempFileName))
             {
                 File.Delete(tempFileName);
@@ -155,6 +167,7 @@ namespace NOLFAutoRecorder
         void StopRecorder()
         {
             Process.Start(fmediaPath, fmediaStopArgs);
+            WriteLog("Recording process stopped", ToolTipIcon.Info);
         }
 
         void StopProcess(Process procToStop)
@@ -166,6 +179,7 @@ namespace NOLFAutoRecorder
                     return;
                 }
                 procToStop.Kill();
+                WriteLog("Emulator stopped", ToolTipIcon.Info);
             }
             catch
             {

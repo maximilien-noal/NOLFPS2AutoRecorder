@@ -27,6 +27,7 @@ namespace NOLFAutoRecorder.Automation
 
         private void TriggerAction(VirtualKeyCode vkey)
         {
+            WindowReorganizer.SetForegroundWindow(this._targetWindow);
             WindowReorganizer.SetActiveWindow(this._targetWindow);
             this.inputSimulator.Keyboard.KeyDown(vkey);
             this.inputSimulator.Keyboard.Sleep(this._inputDuration);
