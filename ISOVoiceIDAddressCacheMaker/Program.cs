@@ -123,7 +123,7 @@ namespace ISOVoiceIDAddressCacheMaker
 
             Parallel.ForEach(listeOfPositionsAndVoiceId.AsParallel().OrderBy(x => x.Item2), IndexAndVoiceId =>
             {
-                string line = string.Format("{0};{1}", IndexAndVoiceId.Item1, IndexAndVoiceId.Item2.ToString());
+                string line = string.Format("{0},{1}", IndexAndVoiceId.Item1, IndexAndVoiceId.Item2.ToString());
                 outputContent.Add(line);
             });
 
