@@ -56,7 +56,7 @@ namespace NOLFAutoRecorder.Automation
                 {
                     long positionInFile = voiceIDsPositionsAndValueCache.Where(x => x.Item2 == voiceIdToSeek).FirstOrDefault().Item1;
 
-                    if (positionInFile != 0)
+                    if (positionInFile != 0 && voiceIdToPut != 0)
                     {
                         positionsToWriteToAndModifiedValues.Add(new Tuple<long, int>(
                                             positionInFile,
@@ -72,7 +72,7 @@ namespace NOLFAutoRecorder.Automation
                 foreach (var positionAndModifiedValue in positionsToWriteToAndModifiedValues)
                 {
                     binWriter.BaseStream.Position = positionAndModifiedValue.Item1;
-                    binWriter.Write(positionAndModifiedValue.Item2);
+                    binWriter.Write(ASCIIEncoding.ASCII.GetBytes(positionAndModifiedValue.Item2.ToString()));
                 }
                 binWriter.Flush();
             }
@@ -123,7 +123,7 @@ namespace NOLFAutoRecorder.Automation
                         continue;
                     }
                     binWriter.BaseStream.Position = positionAndOriginalValue.Item1;
-                    binWriter.Write(positionAndOriginalValue.Item2);
+                    binWriter.Write(ASCIIEncoding.ASCII.GetBytes(positionAndOriginalValue.Item2.ToString()));
                 }
                 binWriter.Flush();
             }
