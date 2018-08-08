@@ -118,6 +118,10 @@ namespace NOLFAutoRecorder.Automation
             {
                 foreach (var positionAndOriginalValue in voiceIDsPositionsAndValueCache)
                 {
+                    if(positionAndOriginalValue.Item1 == 0)
+                    {
+                        continue;
+                    }
                     binWriter.BaseStream.Position = positionAndOriginalValue.Item1;
                     binWriter.Write(positionAndOriginalValue.Item2);
                 }
