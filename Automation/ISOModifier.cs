@@ -89,7 +89,7 @@ namespace NOLFAutoRecorder.Automation
                 }
                 foreach (var line in File.ReadAllLines(cacheFilePath))
                 {
-                    string[] splittedLine = line.Split(';');
+                    string[] splittedLine = line.Split(',');
                     if (splittedLine[0] == "-1")
                     {
                         splittedLine[0] = "0";
