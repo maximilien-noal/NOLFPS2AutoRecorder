@@ -67,7 +67,7 @@ namespace NOLFAutoRecorder
         private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId)
         {
             recordEndTimer.Stop();
-            //ISOModifier.PrepareNextBatch(startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
+            ISOModifier.PrepareNextBatch(startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
             pcsx2Process = StartPcsx2();
             pcsx2Process.WaitForInputIdle();
             emulatorWindow = pcsx2Process.MainWindowHandle;
