@@ -76,9 +76,18 @@ namespace ISOVoiceIDAddressCacheMaker
 
                     int indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdSurroundedByZeroes.ToArray());
 
+                    if (indexOfVoiceId != -1)
+                    {
+                        indexOfVoiceId += 1;
+                    }
+
                     if (indexOfVoiceId == -1)
                     {
                         indexOfVoiceId = GetIndexOfBytePattern(areaOfInterest, voiceIdPrefixedWithZero.ToArray());
+                        if(indexOfVoiceId != -1)
+                        {
+                            indexOfVoiceId += 1;
+                        }
                     }
 
                     if (indexOfVoiceId == -1)
