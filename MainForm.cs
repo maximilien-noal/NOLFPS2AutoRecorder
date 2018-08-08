@@ -41,6 +41,7 @@ namespace NOLFAutoRecorder
             ISOModifier.UndoModifications();
             endOfLifeActions.Add(StopRecorder);
             endOfLifeActions.Add(() => StopProcess(pcsx2Process));
+            endOfLifeActions.Add(() => Thread.Sleep(5));
             endOfLifeActions.Add(ISOModifier.UndoModifications);
             this.Shown += MainForm_Shown;
             Application.ApplicationExit += OnApplicationExit;
@@ -91,15 +92,15 @@ namespace NOLFAutoRecorder
             StartRecorder();
             recordEndTime = DateTime.Now;
             recordEndTime.AddSeconds(SoundInfo.GetSoundLengthOfFiles(currentBatchStartId, numberOfVoicesAvailable));
-            recordEndTimer.Start();
+            // recordEndTimer.Start(); <- too fast, disabled for now
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            Parallel.ForEach(this.endOfLifeActions, action =>
+            foreach(var action in this.endOfLifeActions)
             {
                 action.Invoke();
-            });
+            }
         }
 
         void WriteLog(string message, ToolTipIcon icon)

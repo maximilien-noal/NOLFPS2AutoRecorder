@@ -120,7 +120,7 @@ namespace MetadataRetriever
 
             int.TryParse(lengthBuf.ToString(), out int length);
 
-            return length / 1000;
+            return length * 1000;
         }
     }
 }

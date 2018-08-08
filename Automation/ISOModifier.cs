@@ -90,6 +90,10 @@ namespace NOLFAutoRecorder.Automation
                 foreach (var line in File.ReadAllLines(cacheFilePath))
                 {
                     string[] splittedLine = line.Split(',');
+                    if(splittedLine.Count() < 2)
+                    {
+                        continue;
+                    }
                     if (splittedLine[0] == "-1")
                     {
                         splittedLine[0] = "0";
