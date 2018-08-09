@@ -95,8 +95,8 @@ namespace NOLFAutoRecorder
             }
             //Wait for the quicksave to be loaded
             WaitSeconds(22);
-            activationAction.Invoke();
             StartRecorder(currentBatchStartId, numberOfVoicesAvailable);
+            activationAction.Invoke();
         }
 
         private static void WaitSeconds(int seconds)
