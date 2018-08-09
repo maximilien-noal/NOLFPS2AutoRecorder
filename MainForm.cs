@@ -63,11 +63,14 @@ namespace NOLFAutoRecorder
             
             //The ID are linear between 10520 and 10600, so we can simply loop over it with a for,
             // but other scenes will need a different loop
-            for (int i = currentBatchStartId; i <= currentSceneLastVoiceId; i++)
-            {
+            //for (int i = currentBatchStartId; i <= currentSceneLastVoiceId; i++)
+            //{
                 RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStartId, triggerAction);
-                WaitSeconds(SoundInfo.GetSoundLengthOfFiles(i, currentSceneLastVoiceId - currentBatchStartId));
-            }
+                
+                // WaitSeconds(SoundInfo.GetSoundLengthOfFiles(i, currentSceneLastVoiceId - currentBatchStartId));
+            //}
+            //loop disabled as "Wait Seconds" waits too much...
+            // Modifying the currentBatchStartId for each record session in the source code for now.
         }
 
         private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId, Action activationAction)
