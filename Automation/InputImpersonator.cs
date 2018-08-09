@@ -71,6 +71,7 @@ namespace NOLFAutoRecorder.Automation
             GoLeft();
             GoLeft();
             Advance();
+            Advance();
             Interact();
         }
     }

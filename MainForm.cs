@@ -96,6 +96,8 @@ namespace NOLFAutoRecorder
             //Wait for the quicksave to be loaded
             WaitSeconds(22);
             StartRecorder(currentBatchStartId, numberOfVoicesAvailable);
+            WaitSeconds(1);
+            WindowReorganizer.SetActiveWindow(emulatorViewPortWindow);
             activationAction.Invoke();
         }
 
