@@ -46,34 +46,40 @@ namespace NOLFAutoRecorder
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-            RecordBerlinSceneOne();
+            RecordBerlinSceneTwo();
         }
 
-        private void RecordBerlinSceneOne()
+        private void RecordBerlinSceneTwo()
         {
-            int currentSceneStartVoiceId = 10504; //always the same ID
-            int numberOfVoicesAvailable = 9; //number of lines in the dialogue used
-            int currentBatchStartId = 10520; //loop over it until the voice ID no longer belongs to the Scene
-            int currentSceneLastVoiceId = 10600; //Wild guess...
+            int currentSceneStartVoiceId = 10542; //always the same ID
+            int numberOfVoicesAvailable = 17; //number of lines in the dialogue used
+            int currentBatchStartId = 10560; //loop over it until the voice ID no longer belongs to the Scene
+            var missionLoadAction = new Action(() =>
+            {
+                WriteLog("Loading Berlin Scene Two...", ToolTipIcon.Warning);
+                this.inputImpersonator.LoadBerlinSceneTwo();
+            });
+
             var triggerAction = new Action(() =>
             {
-                WriteLog("Activating Berlin Scene One dialogue...", ToolTipIcon.Warning);
-                this.inputImpersonator.TriggerBerlinSceneOne();
+                WriteLog("Activating Berlin Scene Two dialogue...", ToolTipIcon.Warning);
+                this.inputImpersonator.TriggerBerlinSceneTwo();
             });
-            
+
+            RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStartId, missionLoadAction, triggerAction);
+
             //The ID are linear between 10520 and 10600, so we can simply loop over it with a for,
             // but other scenes will need a different loop
             //for (int i = currentBatchStartId; i <= currentSceneLastVoiceId; i++)
             //{
-                RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStartId, triggerAction);
-                
-                // WaitSeconds(SoundInfo.GetSoundLengthOfFiles(i, currentSceneLastVoiceId - currentBatchStartId));
+
+            // WaitSeconds(SoundInfo.GetSoundLengthOfFiles(i, currentSceneLastVoiceId - currentBatchStartId));
             //}
             //loop disabled as "Wait Seconds" waits too much...
             // Modifying the currentBatchStartId for each record session in the source code for now.
         }
 
-        private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId, Action activationAction)
+        private void RecordVoiceSet(int startVoiceIdOfScene, int numberOfVoicesAvailable, int currentBatchStartId, Action missionLoadAction, Action activationAction)
         {
             ISOModifier.PrepareNextBatch(startVoiceIdOfScene, currentBatchStartId, numberOfVoicesAvailable);
             pcsx2Process = StartPcsx2();
@@ -83,25 +89,15 @@ namespace NOLFAutoRecorder
             WaitSeconds(12);
             emulatorViewPortWindow = WndFinder.SearchForWindow("wxWindowNR", "Slot");
             this.inputImpersonator = new InputImpersonator(emulatorViewPortWindow);
-            bool quickLoadSuccess = LoadQuickSave();
-            if (quickLoadSuccess)
-            {
-                WriteLog("QuickSave loaded", ToolTipIcon.Info);
-            }
-            else
-            {
-                WriteLog("QuickSave NOT loaded !", ToolTipIcon.Error);
-                return;
-            }
-            //Wait for the quicksave to be loaded
-            WaitSeconds(22);
+
+            this.inputImpersonator.SelectFrenchLanguage();
+            missionLoadAction.Invoke();
             StartRecorder(currentBatchStartId, numberOfVoicesAvailable);
-            WaitSeconds(1);
             WindowReorganizer.SetActiveWindow(emulatorViewPortWindow);
             activationAction.Invoke();
         }
 
-        private static void WaitSeconds(int seconds)
+        public static void WaitSeconds(double seconds)
         {
             var whenEmulatorReady = DateTime.Now.AddSeconds(seconds);
             while (DateTime.Now < whenEmulatorReady)
