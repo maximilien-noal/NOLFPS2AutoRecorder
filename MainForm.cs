@@ -51,19 +51,19 @@ namespace NOLFAutoRecorder
 
         private void RecordBerlinSceneTwo()
         {
-            int currentSceneStartVoiceId = 10542; //always the same ID
-            int numberOfVoicesAvailable = 17; //number of lines in the dialogue used
+            int currentSceneStartVoiceId = 10560; //always the same ID
+            int numberOfVoicesAvailable = 6; //number of lines in the dialogue used
             int currentBatchStartId = 10560; //loop over it until the voice ID no longer belongs to the Scene
             var missionLoadAction = new Action(() =>
             {
-                WriteLog("Loading Berlin Scene Two...", ToolTipIcon.Warning);
-                this.inputImpersonator.LoadBerlinSceneTwo();
+                WriteLog("Loading Berlin Scene Five...", ToolTipIcon.Warning);
+                this.inputImpersonator.LoadBerlinSceneFive();
             });
 
             var triggerAction = new Action(() =>
             {
-                WriteLog("Activating Berlin Scene Two dialogue...", ToolTipIcon.Warning);
-                this.inputImpersonator.TriggerBerlinSceneTwo();
+                WriteLog("Activating Berlin Scene Five dialogue...", ToolTipIcon.Warning);
+                this.inputImpersonator.TriggerBerlinSceneFive();
             });
 
             RecordVoiceSet(currentSceneStartVoiceId, numberOfVoicesAvailable, currentBatchStartId, missionLoadAction, triggerAction);

@@ -71,53 +71,46 @@ namespace NOLFAutoRecorder.Automation
             MainForm.WaitSeconds(8);
         }
 
-        public void LoadBerlinSceneTwo()
+        /// <summary>
+        /// Selects and trigger the loading of a scene from the dev menu
+        /// </summary>
+        /// <param name="numberOfRepeats">Number of times we have to hit 'Menu Down' button</param>
+        public void LoadScene(int numberOfRepeats)
         {
             Interact();
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
+            for(int i = 0; i < numberOfRepeats; i++)
+            {
+                MenuDown();
+                MainForm.WaitSeconds(0.1);
+            }
             Interact();
             MainForm.WaitSeconds(19);
+
+        }
+
+        public void LoadBerlinSceneTwo()
+        {
+            LoadScene(8);
         }
 
         public void LoadBerlinSceneThree()
         {
-            Interact();
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            MainForm.WaitSeconds(0.1);
-            MenuDown();
-            Interact();
-            MainForm.WaitSeconds(19);
+            LoadScene(9);
+        }
+
+        public void LoadBerlinSceneFour()
+        {
+            LoadScene(10);
+        }
+
+        public void LoadBerlinSceneFive()
+        {
+            LoadScene(11);
         }
 
         /// <summary>
+        /// StartVoiceId : 10504
+        /// EndVoiceId : 10541
         /// 9 lines available
         /// </summary>
         public void TriggerBerlinSceneOne()
@@ -143,6 +136,29 @@ namespace NOLFAutoRecorder.Automation
             GoRight();
             Advance();
             Advance();
+        }
+
+        /// <summary>
+        /// ? lines available
+        /// </summary>
+        public void TriggerBerlinSceneFour()
+        {
+            GoRight();
+            GoRight();
+            Advance();
+            Advance();
+        }
+
+        /// <summary>
+        /// startVoiceId : 10597
+        /// EndVoiceId : ?
+        /// 6 voices available
+        /// </summary>
+        public void TriggerBerlinSceneFive()
+        {
+            Advance();
+            Advance();
+            GoRight();
         }
     }
 }
