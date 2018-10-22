@@ -1,9 +1,8 @@
 # NOLFPS2AutoRecorder
 
-.NET 4.7 Project
+.NET 4.0 Client Profile Project
 
-If you don't have .NET 4.7, you can grab it here :
-https://www.microsoft.com/fr-fr/download/details.aspx?id=55167
+.NET 4.0 is installed with Windows since Windows Vista.
 
 This project uses Visual Studio. If you don't have it, you can get it here :
 https://visualstudio.microsoft.com/fr/thank-you-downloading-visual-studio/?sku=Community&rel=15
