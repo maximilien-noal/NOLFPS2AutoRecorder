@@ -7,7 +7,7 @@
 
 Remember :
 
-    The LillyPad.ini file needs to be used by PCSX2
+    The LilyPad.ini file needs to be used by PCSX2
     You need to have the fmedia tool installed.
     The paths in the App.config file need to match :
 
